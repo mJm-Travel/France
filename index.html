@@ -43,5 +43,38 @@
    <li><a href="https://mjm-travel.github.io/France/Hotels/Hotel-du-Cadran.html" target=_blank>Hotel du Cadran</a></li>
 
     </ul>
+     <h1>All in France</h1>
+  <ul id="file-list"></ul>
+
+  <script>
+    async function loadFiles() {
+      const repoOwner = "YOUR_GITHUB_USERNAME"; // replace with your username
+      const repoName = "France";
+      const folderPath = "Tours/q";
+
+      const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${folderPath}`;
+      
+      try {
+        const response = await fetch(url);
+        const files = await response.json();
+
+        let list = document.getElementById("file-list");
+        files.forEach(file => {
+          if (file.type === "file") {
+            let li = document.createElement("li");
+            let a = document.createElement("a");
+            a.href = file.path; // works with GitHub Pages if deployed
+            a.textContent = file.name;
+            li.appendChild(a);
+            list.appendChild(li);
+          }
+        });
+      } catch (err) {
+        console.error("Error loading files:", err);
+      }
+    }
+
+    loadFiles();
+  </script>
 </body>
 </html>
