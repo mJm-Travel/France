@@ -1,80 +1,77 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>France</title>
-    <style>
-        body { font-family: Arial, sans-serif; padding: 40px; }
-        h1 { text-align: center; }
-        ul { list-style-type: none; padding: 0; }
-        li { margin: 10px 0; }
-        a { text-decoration: none; color: #0077cc; }
-        a:hover { text-decoration: underline; }
-    </style>
+  <meta charset="UTF-8">
+  <title>France Repo File Tree</title>
+  <style>
+    ul { list-style-type: none; margin-left: 20px; }
+    li { margin: 4px 0; }
+  </style>
 </head>
 <body>
-    <h1>France</h1>
-    <h2 align=left>France Tours</h2>
-    <h3 align=left>France Trending Tours</h3>
-        <ul id="pages-list">
-       
-        <!-- Pages will be populated here -->
-    </ul>
-    <h3 align=left>France Search Queries</h3>
-    <ul id="pages-list">
-   <li><a href="https://mjm-travel.github.io/France/Tours/q/Notre-Dame-Cathedral.html" target=_blank>Notre Dame Cathedral</a></li>      
-   <li><a href="https://mjm-travel.github.io/France/Tours/q/Le-Marais.html" target=_blank>Le Marais</a></li>           
-   <li><a href="https://mjm-travel.github.io/France/Tours/q/Latin-Quarter-Paris.html" target=_blank>Latin Quarter Paris</a></li>           
-   <li><a href="https://mjm-travel.github.io/France/Tours/q/Museum-of-Illusions-Paris.html" target=_blank>Museum of Illusions Paris</a></li>           
-   <li><a href="https://mjm-travel.github.io/France/Tours/q/Strasbourg-Christmas-Market.html" target=_blank>Strasbourg Christmas Market</a></li>           
-   <li><a href="https://mjm-travel.github.io/France/Tours/q/Versailles-Palace.html" target=_blank>Versailles Palace</a></li>           
-   <li><a href="https://mjm-travel.github.io/France/Tours/q/Paris-Seine-River.html" target=_blank>Paris Seine River</a></li>           
-   <li><a href="https://mjm-travel.github.io/France/Tours/q/Big-Bus-Paris.html" target=_blank>Big Bus Paris</a></li>           
-   <li><a href="https://mjm-travel.github.io/France/Tours/q/Louvre-Museum.html" target=_blank>Louvre Museum</a></li>      
-   <li><a href="https://mjm-travel.github.io/France/Tours/q/Secrets-of-Paris.html" target=_blank>Secrets of Paris</a></li> 
-   <li><a href="https://mjm-travel.github.io/France/Tours/q/Menton-France.html" target=_blank>Menton France</a></li>     
-   <li><a href="https://mjm-travel.github.io/France/Tours/q/Charles-De-Gaulle.html" target=_blank>Charles De Gaulle</a></li>
-   <li><a href="https://mjm-travel.github.io/France/Tours/q/Paris-Tours.html" target=_blank>Paris Tours</a></li>     
-   <li><a href="https://mjm-travel.github.io/France/Tours/q/Eiffel-Tower.html" target=_blank>Eiffel Tower</a></li>   
-   <li><a href="https://mjm-travel.github.io/France/Tours/q/Old-Paris.html" target=_blank>Old Paris</a></li>      
-    </ul>
-<h2 align=left>France Hotels</h2>
-        <ul id="pages-list">
-   <li><a href="https://mjm-travel.github.io/France/Hotels/Hotel-du-Cadran.html" target=_blank>Hotel du Cadran</a></li>
-
-    </ul>
-     <h1>All in France</h1>
-  <ul id="file-list"></ul>
+  <h1>📂 France Repository Files</h1>
+  <ul id="repo-tree"></ul>
 
   <script>
-    async function loadFiles() {
-      const repoOwner = "mJm-Travel"; // replace with your username
-      const repoName = "France";
-      const folderPath = "Tours/q";
+    const repoOwner = "mJm-Travel"; // 👈 change this
+    const repoName = "France";                // 👈 change this
+    const branch = "main"; // or "master" depending on your repo
 
-      const url = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${folderPath}`;
-      
+    async function loadRepoTree() {
+      const url = `https://api.github.com/repos/${repoOwner}/${repoName}/git/trees/${branch}?recursive=1`;
+
       try {
         const response = await fetch(url);
-        const files = await response.json();
+        const data = await response.json();
+        const files = data.tree;
 
-        let list = document.getElementById("file-list");
-        files.forEach(file => {
-          if (file.type === "file") {
-            let li = document.createElement("li");
-            let a = document.createElement("a");
-            a.href = file.path; // works with GitHub Pages if deployed
-            a.textContent = file.name;
-            li.appendChild(a);
-            list.appendChild(li);
-          }
+        // Build nested folder structure
+        let root = {};
+
+        files.forEach(item => {
+          let parts = item.path.split("/");
+          let current = root;
+          parts.forEach((part, i) => {
+            if (!current[part]) {
+              current[part] = { __type: i === parts.length - 1 ? item.type : "tree" };
+            }
+            current = current[part];
+          });
         });
+
+        function buildList(obj, basePath = "") {
+          let ul = document.createElement("ul");
+          for (let name in obj) {
+            if (name === "__type") continue;
+            let li = document.createElement("li");
+
+            if (obj[name].__type === "blob") { 
+              // file
+              let a = document.createElement("a");
+              a.href = `${name}`.endsWith(".html") 
+                ? `${basePath}${name}` 
+                : `https://github.com/${repoOwner}/${repoName}/blob/${branch}/${basePath}${name}`;
+              a.textContent = name;
+              li.appendChild(a);
+            } else { 
+              // folder
+              li.textContent = "📁 " + name;
+              li.appendChild(buildList(obj[name], basePath + name + "/"));
+            }
+
+            ul.appendChild(li);
+          }
+          return ul;
+        }
+
+        document.getElementById("repo-tree").appendChild(buildList(root));
+
       } catch (err) {
-        console.error("Error loading files:", err);
+        console.error("Error loading repo tree:", err);
       }
     }
 
-    loadFiles();
+    loadRepoTree();
   </script>
 </body>
 </html>
